@@ -1,2 +1,2 @@
-# workflow_examples
+# Workflow Examples
 Examples using workflow software at ALCF
