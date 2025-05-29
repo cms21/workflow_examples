@@ -1,5 +1,9 @@
 from balsam.api import ApplicationDefinition,Job,BatchJob,Site
 
+# This script demonstrates how to run mpiexec tasks in batches of 1000 on Aurora using Balsam.
+# This is a workaround for the current bug in palsd that does not return VNIs 
+# when mpiexec calls return
+
 class hello_sleep(ApplicationDefinition):
     site = "aurora-testing"
 
