@@ -1,9 +1,12 @@
 import parsl
+from copy import copy
 from parsl import Config
 from parsl.executors import MPIExecutor
 from parsl.providers import PBSProProvider
 from parsl.launchers import SimpleLauncher
 from parsl.app.app import bash_app
+from parsl.dataflow.dflow import DataFlowKernelLoader
+
 
 # This script demonstrates how to run mpiexec tasks in batches of 1000 on Aurora using Parsl.
 # This is a workaround for the current bug in palsd that does not return VNIs 
@@ -20,6 +23,7 @@ def make_config(num_executors,
             walltime='00:10:00',
             queue='prod',
             account='datascience',
+            worker_init='source ~/_parsl/bin/activate',
             init_blocks=1,
             min_blocks=1,
             max_blocks=1,
@@ -31,10 +35,13 @@ def make_config(num_executors,
     )
     executors = []
     for i in range(num_executors):
-        executor = base_executor.copy()
+        executor = copy(base_executor)
         executor.label = f'mpi_executor_{i}'
         executors.append(executor)  
-    
+
+
+    for i in range(num_executors):
+        print(f"{executors[i].label}")
     return Config(
         executors=executors,
         strategy=None,  # Use default strategy
@@ -42,8 +49,11 @@ def make_config(num_executors,
 
 @bash_app()
 def hello_sleep(parsl_resource_specification, seconds, stdout='tasks.out', stderr='tasks.out'):
-    MPI_call = f"$PARSL_MPI_PREFIX sleep {seconds}"
-    return f"echo '{MPI_call}' && {MPI_call}"
+    MPI_call = f"$PARSL_MPI_PREFIX /flare/datascience/csimpson/workflow_examples/parsl/vni_limit/app.sh {seconds}"
+    print(MPI_call)
+    #return f"echo '{MPI_call}' && {MPI_call}"
+    return MPI_call
+
 
 if __name__ == "__main__":
 
@@ -64,16 +74,23 @@ if __name__ == "__main__":
         'num_ranks': 12*nodes_per_task,        # Number of ranks in total
         }
 
+
+    
     with parsl.load(config) as dfk:
+        print(dfk)
         futures = []
         for i in range(num_batches):
-            print(f"Submitting tasks to executor mpi_executor_{i}")
+            executor = [config.executors[i].label]
+            print(f"Submitting tasks to executor {executor}")
             for j in range(batch_size):
-                if len(futures) < ntasks:
+                if len(futures) < ntasks:  
                     future = dfk.submit(hello_sleep,
-                                        resource_specification, 
-                                        10, 
-                                        executor=f'mpi_executor_{i}')
+                                        app_args=(resource_specification, 
+                                                  10,),
+                                        executors=executor,
+                                        cache=False,
+                                        ignore_for_cache=None,
+                                        app_kwargs={'parsl_resource_specification':resource_specification},)
                     futures.append(future)
 
         with open('tasks.out', 'w') as f:
