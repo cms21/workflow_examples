@@ -47,7 +47,6 @@ def make_config(num_executors,
         strategy=None,  # Use default strategy
     )   
 
-@bash_app()
 def hello_sleep(parsl_resource_specification, seconds, stdout='tasks.out', stderr='tasks.out'):
     MPI_call = f"$PARSL_MPI_PREFIX /flare/datascience/csimpson/workflow_examples/parsl/vni_limit/app.sh {seconds}"
     print(MPI_call)
@@ -82,15 +81,10 @@ if __name__ == "__main__":
         for i in range(num_batches):
             executor = [config.executors[i].label]
             print(f"Submitting tasks to executor {executor}")
+            batch_fun = bash_app(hello_sleep, executors=executor)
             for j in range(batch_size):
                 if len(futures) < ntasks:  
-                    future = dfk.submit(hello_sleep,
-                                        app_args=(resource_specification, 
-                                                  10,),
-                                        executors=executor,
-                                        cache=False,
-                                        ignore_for_cache=None,
-                                        app_kwargs={'parsl_resource_specification':resource_specification},)
+                    future = batch_fun(parsl_resource_specification=resource_specification, seconds=10)
                     futures.append(future)
 
         with open('tasks.out', 'w') as f:
