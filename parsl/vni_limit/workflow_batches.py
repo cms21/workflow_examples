@@ -1,11 +1,10 @@
+import os
 import parsl
-from copy import copy
 from parsl import Config
 from parsl.executors import MPIExecutor
 from parsl.providers import PBSProProvider
 from parsl.launchers import SimpleLauncher
 from parsl.app.app import bash_app
-from parsl.dataflow.dflow import DataFlowKernelLoader
 
 
 # This script demonstrates how to run mpiexec tasks in batches of 1000 on Aurora using Parsl.
@@ -17,28 +16,25 @@ def make_config(num_executors,
                 workers_per_block,
                 nodes_per_block):
 
-    base_executor = MPIExecutor(
-        label='mpi_executor',
-        provider=PBSProProvider(
-            walltime='00:10:00',
-            queue='prod',
-            account='datascience',
-            worker_init='source ~/_parsl/bin/activate',
-            init_blocks=1,
-            min_blocks=1,
-            max_blocks=1,
-            nodes_per_block=nodes_per_block,
-            launcher=SimpleLauncher(),
-            scheduler_options="#PBS -l filesystems=home:flare",
-        ),
-        max_workers_per_block=workers_per_block,
-    )
     executors = []
     for i in range(num_executors):
-        executor = copy(base_executor)
-        executor.label = f'mpi_executor_{i}'
-        executors.append(executor)  
-
+        executor = MPIExecutor(
+                    label=f'mpi_executor_{i}',
+                    provider=PBSProProvider(
+                        walltime='00:60:00',
+                        queue='prod',
+                        account='datascience',
+                        worker_init='source ~/_parsl/bin/activate',
+                        init_blocks=1,
+                        min_blocks=1,
+                        max_blocks=1,
+                        nodes_per_block=nodes_per_block,
+                        launcher=SimpleLauncher(),
+                        scheduler_options="#PBS -l filesystems=home:flare",
+                    ),
+                    max_workers_per_block=workers_per_block,
+                )
+        executors.append(executor)
 
     for i in range(num_executors):
         print(f"{executors[i].label}")
@@ -72,22 +68,23 @@ if __name__ == "__main__":
         'ranks_per_node': 12,   # Number of ranks / application elements to be launched per node
         'num_ranks': 12*nodes_per_task,        # Number of ranks in total
         }
-
-
     
-    with parsl.load(config) as dfk:
-        print(dfk)
+    with parsl.load(config):
         futures = []
         for i in range(num_batches):
             executor = [config.executors[i].label]
             print(f"Submitting tasks to executor {executor}")
             batch_fun = bash_app(hello_sleep, executors=executor)
+            stdout_path = os.path.join(os.getcwd(),f"batch_{i}.out")
             for j in range(batch_size):
                 if len(futures) < ntasks:  
-                    future = batch_fun(parsl_resource_specification=resource_specification, seconds=10)
+                    future = batch_fun(parsl_resource_specification=resource_specification,
+                                       seconds=10,
+                                       stdout=stdout_path,
+                                       stderr=stdout_path,)
                     futures.append(future)
 
-        with open('tasks.out', 'w') as f:
+        with open('task_progress.out', 'w') as f:
             for i,future in enumerate(futures):
                 f.write(f"Waiting for task {i} to complete\n")
                 f.write(f"Task {i} completed with result: {future.result()}\n")
