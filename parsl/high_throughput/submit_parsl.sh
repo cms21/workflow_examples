@@ -9,7 +9,7 @@ cd ${PBS_O_WORKDIR}
 export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
 
 source $HOME/_parsl/bin/activate
-LAUNCH_SCRIPT=/flare/datascience/csimpson/workflow_examples/parsl/high_throughput/high_throughput_test.py
+LAUNCH_SCRIPT=/flare/workflow_scaling/csimpson/workflow_examples/parsl/high_throughput/high_throughput_test.py
 
 NNODES=`wc -l < $PBS_NODEFILE`
 echo "Number of nodes: ${NNODES}" > nnodes.txt

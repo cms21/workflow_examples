@@ -5,7 +5,6 @@ import time
 import argparse
 from parsl import bash_app
 from config_injob import aurora_single_tile_config
-from config_injob_multiblock import aurora_single_tile_config as multiblock_config
 from concurrent.futures import TimeoutError
 
 @bash_app
@@ -27,8 +26,6 @@ def arg_parse():
                         help='number of tasks per worker')
     parser.add_argument('--io-type', type=str, default='per-node',
                         help='file output strategy for task stdout/err')
-    parser.add_argument('--config', type=str, default='single-block',
-                        help='parsl config to use')
     
     return parser.parse_args()
 
@@ -40,13 +37,8 @@ if __name__ == "__main__":
     for arg_name, arg_value in vars(args).items():
         print(f"Argument '{arg_name}': {arg_value}")
 
-    if args.config == 'single-block':
-        use_config = aurora_single_tile_config
-    elif args.config == 'multi-block':
-        use_config = multiblock_config
-    else:
-        raise ValueError(f"Unknown config: {args.config}")
-    
+    use_config = aurora_single_tile_config
+        
     with parsl.load(use_config):
 
         print(f"Hello parsl",flush=True)

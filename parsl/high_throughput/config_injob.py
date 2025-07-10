@@ -23,6 +23,7 @@ with open(node_file,"r") as f:
     num_nodes = len(node_list)
 
 aurora_single_tile_config = Config(
+    initialize_logging=False,
     executors=[
         HighThroughputExecutor(
             # Ensures one worker per GPU tile on each node
