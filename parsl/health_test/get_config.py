@@ -46,14 +46,15 @@ def get_config(provider_type,
     executor = HighThroughputExecutor(provider=provider)
 
     # Set machine specific parameters
-    if machine == "polaris":
+    if machine in ["polaris", "sirius"]:
         executor.available_accelerators = ['0','1','2','3']
         executor.max_workers_per_node = 4
         executor.cpu_affinity = "list:24-31,56-63:16-23,48-55:8-15,40-47:0-7,32-39"
-        #launcher.overrides += " --env TMPDIR=$TMPDIR"
+        launcher.overrides += " --env TMPDIR=$TMPDIR"
         if provider_type == "pbs":
-            executor.provider.scheduler_options = "#PBS -l filesystems=home:grand:eagle"
             executor.provider.cpus_per_node = 64
+            if machine == "polaris": executor.provider.scheduler_options = "#PBS -l filesystems=home:eagle:grand"
+            if machine == "sirius": executor.provider.scheduler_options = "#PBS -l filesystems=home:tegu"
     elif machine == "aurora":
         executor.available_accelerators = ['0.0','0.1','1.0','1.1','2.0','2.1','3.0','3.1','4.0','4.1','5.0','5.1']
         executor.max_workers_per_node = 12

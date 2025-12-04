@@ -23,6 +23,8 @@ def arg_parse():
                         help="Machine type: polaris or aurora")
     parser.add_argument("--nodes_per_block", type=int, default=1,
                         help="Number of nodes per block")
+    parser.add_argument("--timeout", type=int, default=30,
+                        help="Timeout for parsl tasks in seconds")
     parser.add_argument("--queue", type=str, default=None,
                         help="Queue name for PBS provider")
     parser.add_argument("--project", type=str, default=None,
@@ -42,7 +44,7 @@ if __name__ == "__main__":
                         queue = args.queue,
                         project = args.project)
     
-    if args.machine == "polaris":
+    if args.machine == "polaris" or args.machine == "sirius":
         workers_per_node = 4
     elif args.machine == "aurora":
         workers_per_node = 12
@@ -64,7 +66,7 @@ if __name__ == "__main__":
         print("Waiting for tasks to complete...")
 
         for i, future in enumerate(futures):
-            result = future.result(timeout=30)
+            result = future.result(timeout=args.timeout)
             # print(f"Task {i} completed with result: {result}", flush=True)
             
         print("All tasks completed.")
