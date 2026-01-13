@@ -8,6 +8,7 @@ from parsl.config import Config
 from parsl.providers import LocalProvider
 # The high throughput executor is for scaling large single core/tile/gpu tasks on HPC system:
 from parsl.executors import HighThroughputExecutor
+from parsl.addresses import address_by_interface
 # Use the MPI launcher to launch worker processes:
 from parsl.launchers import MpiExecLauncher
 
@@ -28,6 +29,8 @@ aurora_single_tile_config = Config(
         HighThroughputExecutor(
             # Ensures one worker per GPU tile on each node
             available_accelerators=tile_names,
+            # Specify interface for manager-interchange communication
+            address=address_by_interface('bond0'),
             max_workers_per_node=12,
             # Distributes threads to workers/tiles in a way optimized for Aurora
             cpu_affinity=cpu_affinity,
