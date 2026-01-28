@@ -5,10 +5,6 @@ import glob
 from datetime import datetime
 from multiprocessing import Pool
 
-# Plots to make:
-# 1. Plot the elapsed time vs. number of nodes
-# 2. Plot the parsl overhead time vs. number of nodes
-# 3. Plot the task rate vs. number of nodes
 
 format = 'png'
 
