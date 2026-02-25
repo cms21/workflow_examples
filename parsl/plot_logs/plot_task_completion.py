@@ -92,8 +92,19 @@ def get_run_task_times(block_path, min_start_time=None):
     for line in recieve_lines:
         task_id = line.split("executor task")[-1].strip()
         time = line.split("worker_log")[0].strip()
-        task_times[task_id] = {"start": datetime.strptime(time, time_format)}
-
+        try:
+            task_times[task_id] = {"start": datetime.strptime(time, time_format)}
+        except ValueError:
+            time = line.split()[1].strip()+" "+line.split()[2].strip()
+            print(f"{line=}")
+            print(f"{time=}")
+            task_times[task_id] = {"start": datetime.strptime(time, "%Y-%m-%d %H:%M:%S")}
+        except Exception as e:
+            print("Exception!")
+            print(line)
+            print(time)
+            print(e)
+            
     for line in finished_lines:
         task_id = line.split("executor task")[-1].strip()
         time = line.split("worker_log")[0].strip()
@@ -234,6 +245,8 @@ def make_task_plots(block_dir):
                          num_managers=num_managers)
 
 #block_dir='/lus/flare/projects/neutrinoGPU/twester/icarus_run4_mc_prod/runinfo/003/htex/block-0'
-block_dir = "/flare/workflow_scaling/csimpson/workflow_examples/parsl/ping_failure_reproducer/512nodes/runinfo/002/HighThroughputExecutor/block-0"
+block_dir = "/flare/neutrinoGPU/csimpson_testing/scaling_workflow/outputs/runinfo/003/htex/block-0"
+
+#block_dir = "/flare/workflow_scaling/csimpson/workflow_examples/parsl/ping_failure_reproducer/512nodes/runinfo/002/HighThroughputExecutor/block-0"
 make_task_plots(block_dir)
 
